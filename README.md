@@ -2,26 +2,12 @@
 
 > ZIP file reader optimized for network access
 
-## Development environment
+## Development
 
-1. Create a virtual environment:
-   ```sh
-   python3 -m venv --prompt netzip .venv
-   ```
+Install and run [Nox][nox] to format code and run tests.
 
-2. Activate virtual environment:
-   ```sh
-   source .venv/bin/activate
-   ```
+## Release
 
-3. Install the project in editable mode:
-   ```sh
-   pip install --upgrade pip
-   pip install --editable .
-   pip install pytest black isort
-   ```
+Create a new `v*` tag and push it to GitHub.
 
-4. Format source code:
-   ```sh
-   isort . && black .
-   ```
+[nox]: https://nox.thea.codes

@@ -45,6 +45,10 @@ def _unpackbuf(format, buf) -> Tuple:
 # region File format data structures
 
 
+## Fields in the following data structures are separated into two groups:
+## fixed-size and variable-size ones.
+
+
 @dataclass
 class _EocdRecord:
     """End of central directory record."""
@@ -243,7 +247,7 @@ class _FileInfo:
             raise ValueError("CRC32 mismatch")
 
 
-def _read_metadata(source) -> Dict[bytes, _FileInfo]:
+def _read_metadata(source: io.BufferedIOBase) -> Dict[bytes, _FileInfo]:
     """Parse ZIP metadata from source.
 
     Returns:
@@ -277,14 +281,14 @@ class ZipReader(collections.abc.Mapping):
 
     def __getitem__(self, name: bytes) -> bytes:
         """Return contents of a file with the given name."""
-        file = self._files[name]
+        info = self._files[name]
 
-        self._source.seek(file.offset)
-        buf = io.BytesIO(self._source.read(file.max_block_size))
+        self._source.seek(info.offset)
+        buf = io.BytesIO(self._source.read(info.max_block_size))
 
-        file.validate_header(_LocalFileHeader.read(buf))
-        data = buf.read(file.size)
-        file.validate_payload(data)
+        info.validate_header(_LocalFileHeader.read(buf))
+        data = buf.read(info.size)
+        info.validate_payload(data)
         return data
 
     def __iter__(self) -> Iterable[bytes]:
