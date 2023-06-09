@@ -15,3 +15,9 @@ def tests(session):
     session.install("--editable", ".")
     session.install("pytest")
     session.run("pytest")
+
+
+@nox.session
+def build(session):
+    session.install("build")
+    session.run("python", "-m", "build")
