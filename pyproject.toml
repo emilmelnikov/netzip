@@ -19,7 +19,7 @@ where = ["src"]
 [tool.setuptools_scm]
 
 [tool.pytest.ini_options]
-addopts = "-ra --quiet"
+addopts = "-rfEP --quiet"
 testpaths = ["tests"]
 
 [tool.isort]
