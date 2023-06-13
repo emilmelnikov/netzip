@@ -10,4 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: ./.github/actions/nox-tests
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Nox
+        run: pipx install nox
+
+      - name: Run tests
+        run: nox --session tests
