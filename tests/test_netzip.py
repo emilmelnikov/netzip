@@ -1,55 +1,67 @@
 import io
 import zipfile
+import zlib
 
 import pytest
 
-from netzip import ZipReader
+from netzip import Archive, FileSource
+
+CONTENTS = {
+    "small": (
+        {
+            b"spam.txt": (b"SPAM!", b"spammy comment"),
+            b"eggs/ham.bin": (b"\xDE\xAD\xBE\xEF", b"beefy comment"),
+            b"empty": (b"", b""),
+        },
+        b"small comment",
+    ),
+    "zip64": (
+        {f"spam-{i:04X}.txt".encode(): (b"SPAM!", b"^_^") for i in range(0x10000)},
+        b"large comment",
+    ),
+}
 
 
-class TestZip:
-    @pytest.fixture
-    def reader(self):
-        buf = io.BytesIO()
-        with zipfile.ZipFile(buf, mode="w") as zf:
-            zf.writestr("spam.txt", b"SPAM!")
-            zf.writestr("eggs/ham.bin", b"\xDE\xAD\xBE\xEF")
-        return ZipReader(buf)
-
-    def test_getitem(self, reader):
-        assert reader[b"spam.txt"] == b"SPAM!"
-        assert reader[b"eggs/ham.bin"] == b"\xDE\xAD\xBE\xEF"
-
-    def test_iter(self, reader):
-        assert set(reader) == {b"spam.txt", b"eggs/ham.bin"}
-
-    def test_len(self, reader):
-        assert len(reader) == 2
-
-    def test_size(self, reader):
-        assert reader.size(b"spam.txt") == 5
-        assert reader.size(b"eggs/ham.bin") == 4
+@pytest.fixture(scope="class")
+def archive(name) -> Archive:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, mode="w") as zf:
+        zf.comment = CONTENTS[name][1]
+        for name, (data, comment) in CONTENTS[name][0].items():
+            zi = zipfile.ZipInfo(name.decode())
+            zi.comment = comment
+            zf.writestr(zi, data)
+    return Archive(FileSource(buf))
 
 
-class TestZip64:
-    # Make this fixture class-scoped because it's expensive to create.
-    @pytest.fixture(scope="class")
-    def reader(self):
-        buf = io.BytesIO()
-        with zipfile.ZipFile(buf, mode="w") as zf:
-            for i in range(0xFFFF + 1):
-                zf.writestr(f"spam-{i:04X}.txt", b"SPAM!")
-        return ZipReader(buf)
+@pytest.mark.parametrize("name", CONTENTS, scope="class")
+class TestArchive:
+    def test_getitem(self, name, archive):
+        for name, (data, _comment) in CONTENTS[name][0].items():
+            assert archive[name] == data
 
-    def test_getitem(self, reader):
-        assert reader[b"spam-0000.txt"] == b"SPAM!"
-        assert reader[b"spam-FFFF.txt"] == b"SPAM!"
+    def test_iter(self, name, archive):
+        assert set(archive) == set(CONTENTS[name][0])
 
-    def test_iter(self, reader):
-        assert set(reader) == {f"spam-{i:04X}.txt".encode() for i in range(0xFFFF + 1)}
+    def test_len(self, name, archive):
+        assert len(archive) == len(CONTENTS[name][0])
 
-    def test_len(self, reader):
-        assert len(reader) == 0xFFFF + 1
+    def test_comment(self, name, archive):
+        assert archive.comment == CONTENTS[name][1]
 
-    def test_size(self, reader):
-        assert reader.size(b"spam-0000.txt") == 5
-        assert reader.size(b"spam-FFFF.txt") == 5
+    def test_file_names(self, name, archive):
+        assert set(archive.files) == set(CONTENTS[name][0])
+
+    def test_file_keys_match_names(self, archive):
+        for name, file in archive.files.items():
+            assert name == file.name
+
+    def test_file_comments(self, name, archive):
+        for file in archive.files.values():
+            assert file.comment == CONTENTS[name][0][file.name][1]
+
+    def test_crc32(self, name, archive):
+        for file in archive.files.values():
+            crc32 = zlib.crc32(CONTENTS[name][0][file.name][0])
+            assert file.crc32 == crc32
+            assert zlib.crc32(archive[file.name]) == crc32

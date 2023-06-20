@@ -1,6 +1,6 @@
 import nox
 
-nox.options.sessions = ["format", "tests"]
+nox.options.sessions = ["format", "lint", "tests"]
 
 
 @nox.session
@@ -8,6 +8,13 @@ def format(session):
     session.install("isort", "black")
     session.run("isort", ".")
     session.run("black", ".")
+
+
+@nox.session
+def lint(session):
+    session.install("ruff", "pyright")
+    session.run("ruff", ".")
+    session.run("pyright")
 
 
 @nox.session
