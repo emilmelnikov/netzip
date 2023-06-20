@@ -23,8 +23,8 @@ jobs:
       - name: Install Nox
         run: pipx install nox
 
-      - name: Run tests
-        run: nox --session tests
+      - name: Lint and test
+        run: nox --session lint tests
 
       - name: Build packages
         run: nox --session build
