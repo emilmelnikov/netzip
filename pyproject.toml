@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "netzip"
-version = "0.3.0"
+version = "0.3.1"
 authors = [{ name = "Emil Melnikov", email = "emilmelnikov@gmail.com" }]
 description = "ZIP file reader optimized for network access"
 readme = "README.md"
@@ -12,9 +12,9 @@ requires-python = ">=3.8"
 license = { text = "MIT" }
 
 [project.urls]
-"Homepage" = "https://github.com/emilmelnikov/netzip"
-"Bug Tracker" = "https://github.com/emilmelnikov/netzip/issues"
-"Source" = "https://github.com/emilmelnikov/netzip"
+"Homepage" = "https://github.com/ilastik/netzip"
+"Bug Tracker" = "https://github.com/ilastik/netzip/issues"
+"Source" = "https://github.com/ilastik/netzip"
 
 [tool.setuptools.packages.find]
 where = ["src"]
